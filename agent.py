@@ -26,3 +26,25 @@ class Agent:
 
         return torch.argmax(q).item()
     
+    def train(self, state, next_state, done, action, reward, epsilon_update):
+        state = torch.tensor(state, dtype=torch.float32)
+        next_state = torch.tensor(next_state, dtype=torch.float32)
+
+        q_values = self.model(state)
+        next_q = self.model(next_state)
+
+        target = q_values.clone()
+
+        if done:
+            target[action] = reward
+        else:
+            target[action] = reward + self.gamma * torch.max(next_q)
+
+        loss = nn.SmoothL1Loss()(q_values, target)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        
+        if self.epsilon > self.epsilon_min and epsilon_update:
+            self.epsilon *= self.epsilon_decay
