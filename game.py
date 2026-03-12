@@ -10,7 +10,7 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
 
-FPS = 60
+FPS = 1024
 
 class Game:
     def __init__(self):
@@ -35,14 +35,24 @@ class Game:
         self.paddlePosition = [(WIDTH / 2)- (self.paddleWidth / 2), 900]
         self.ballSpeed = [10 * random.choice([1, -1]), 8]
 
-        print("Reset: ", self.ballPosition, self.ballSpeed)
+        # print("Reset: ", self.ballPosition, self.ballSpeed)
+        return self.get_state()
 
     def get_state(self):
+        isBallCenter = 0.5
+        if (self.ballPosition[0] + (self.ballSize / 2) < self.paddlePosition[0]):
+            isBallCenter = 0
+        elif (self.ballPosition[0] - (self.ballSize / 2) > self.paddlePosition[1] + self.paddleWidth):
+            isBallCenter = 1
+            
         return [
-            self.paddlePosition[0] - (self.paddleWidth / 2),
-            self.paddlePosition[1],
-            self.ballPosition[0],
-            self.ballPosition[1]
+            (self.paddlePosition[0] - (self.paddleWidth / 2)) / WIDTH,
+            self.paddlePosition[1] / HEIGHT,
+            self.ballPosition[0] / WIDTH,
+            self.ballPosition[1] / HEIGHT,
+            (self.ballSpeed[0] + 10) / 20,
+            self.ballSpeed[1] / 8,
+            isBallCenter
         ]
 
     def step(self, action):
@@ -53,14 +63,19 @@ class Game:
 
         done = False
 
-        reward = 0
+        reward = 1
 
         if (self.ballPosition[0] + (self.ballSize / 2) > self.paddlePosition[0] and self.ballPosition[0] - (self.ballSize / 2) < self.paddlePosition[0] + self.paddleWidth) and (self.ballPosition[1] + (self.ballSize / 2) >= self.paddlePosition[1]):
             reward = 10
         
-        if self.ballPosition[1] > HEIGHT:
+        if self.ballPosition[1] - (self.ballSize / 2) > HEIGHT:
             reward = -10
             done = True
+
+        # if self.paddlePosition[0] < 0:
+        #     reward = -10
+        # elif self.paddlePosition[0] + self.paddleWidth > WIDTH:
+        #     reward = -10
 
         return self.get_state(), reward, done
 
@@ -81,8 +96,8 @@ class Game:
         elif self.ballPosition[1] - (self.ballSize / 2) < 0:
             self.ballPosition[1] = 0 + (self.ballSize / 2)
             self.ballSpeed[1] *= -1
-        elif (self.ballPosition[1] - (self.ballSize / 2) > HEIGHT):
-            self.reset()
+        # elif (self.ballPosition[1] - (self.ballSize / 2) > HEIGHT):
+        #     self.reset()
 
         self.draw()
 
@@ -98,11 +113,3 @@ class Game:
         pygame.display.update()
         self.clock.tick(FPS)
 
-g = Game()
-
-while True:
-    for e in pygame.event.get():
-        if e.type == pygame.QUIT:
-            exit()
-
-    g.update()
